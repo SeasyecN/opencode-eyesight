@@ -1,10 +1,14 @@
 {
-  "name": "opencode-eyesight",
+  "name": "@seasyecn/opencode-eyesight",
   "version": "0.2.1",
   "description": "OpenCode plugin that lets text-only models work with pasted images through a vision-capable model.",
   "repository": {
     "type": "git",
-    "url": "https://github.com/chriswritescode-dev/opencode-eyesight"
+    "url": "https://github.com/SeasyecN/opencode-eyesight.git"
+  },
+  "homepage": "https://github.com/SeasyecN/opencode-eyesight#readme",
+  "bugs": {
+    "url": "https://github.com/SeasyecN/opencode-eyesight/issues"
   },
   "type": "module",
   "main": "./dist/index.js",
@@ -15,10 +19,14 @@
     "dist",
     "README.md"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "bun build ./src/index.ts --outdir ./dist --target bun --format esm --external @opencode-ai/plugin --external @opencode-ai/sdk",
     "test": "bun test",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prepack": "bun run build"
   },
   "devDependencies": {
     "@opencode-ai/plugin": "latest",
@@ -27,3 +35,4 @@
     "typescript": "^5"
   }
 }
+
