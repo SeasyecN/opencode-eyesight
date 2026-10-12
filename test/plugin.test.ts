@@ -353,8 +353,8 @@ test("configured-model guard: active model matches vision model, no transcriptio
   expect((msg.parts[0] as FilePart).mime).toBe("image/png");
 });
 
-test("no model configured: returns empty hooks", async () => {
-  let logCalled = false;
+test("invalid or incomplete config: logs the disabled reason and returns empty hooks", async () => {
+  let loggedMessage: string | undefined;
 
   const fakeClient = {
     provider: { list: async () => ({ data: providerFixture }) },
@@ -364,8 +364,8 @@ test("no model configured: returns empty hooks", async () => {
       delete: async () => ({ data: true }),
     },
     app: {
-      log: async () => {
-        logCalled = true;
+      log: async (request: { readonly body?: { readonly message?: string } }) => {
+        loggedMessage = request.body?.message;
       },
     },
   };
@@ -374,7 +374,9 @@ test("no model configured: returns empty hooks", async () => {
   const hooks = await VisionFallback(input, undefined);
 
   expect(hooks).toEqual({});
-  expect(logCalled).toBe(true);
+  expect(loggedMessage).toBe(
+    "vision-fallback disabled: invalid or incomplete configuration",
+  );
 });
 
 test("describe session lifecycle: create, prompt, delete each called once", async () => {

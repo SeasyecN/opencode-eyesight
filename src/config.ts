@@ -1,12 +1,22 @@
 import type { Config } from "@opencode-ai/plugin";
 import type { AgentConfig } from "@opencode-ai/sdk";
 
-export interface VisionFallbackConfig {
-  providerID: string;
-  modelID: string;
-  prompt: string;
-  mimePrefixes: string[];
-}
+export type BuiltInVisionConfig = {
+  readonly mode: "built-in";
+  readonly agentName: typeof VISION_AGENT_NAME;
+  readonly providerID: string;
+  readonly modelID: string;
+  readonly prompt: string;
+  readonly mimePrefixes: string[];
+};
+
+export type ExternalVisionConfig = {
+  readonly mode: "external";
+  readonly agentName: string;
+  readonly mimePrefixes: string[];
+};
+
+export type VisionFallbackConfig = BuiltInVisionConfig | ExternalVisionConfig;
 
 export type PromptFileReader = (path: string) => Promise<string>;
 
@@ -40,6 +50,21 @@ export async function resolveConfig(
   env: Record<string, string | undefined>,
   readPromptFile?: PromptFileReader,
 ): Promise<VisionFallbackConfig | undefined> {
+  const agent = options?.agent;
+  const agentName = typeof agent === "string" ? agent.trim() : undefined;
+  const hasAgent = options !== undefined && Object.hasOwn(options, "agent");
+  if (hasAgent && (agentName === undefined || agentName.length === 0)) {
+    return undefined;
+  }
+
+  if (agentName && agentName !== VISION_AGENT_NAME) {
+    return {
+      mode: "external",
+      agentName,
+      mimePrefixes: ["image/"],
+    };
+  }
+
   const modelStr =
     typeof options?.model === "string"
       ? options.model
@@ -53,13 +78,15 @@ export async function resolveConfig(
   const prompt = await resolvePrompt(options, env, readPromptFile);
 
   return {
+    mode: "built-in",
+    agentName: VISION_AGENT_NAME,
     ...parsed,
     prompt,
     mimePrefixes: ["image/"],
   };
 }
 
-export function registerVisionAgent(config: Config, cfg: VisionFallbackConfig): void {
+export function registerVisionAgent(config: Config, cfg: BuiltInVisionConfig): void {
   const existing = config.agent?.[VISION_AGENT_NAME];
   const permission = {
     "*": "deny",

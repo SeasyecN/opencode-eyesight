@@ -1,22 +1,26 @@
-import type { Plugin } from "@opencode-ai/plugin";
-import type { FilePart, Part, TextPartInput, FilePartInput } from "@opencode-ai/sdk";
 import { readFile } from "node:fs/promises";
 import { isAbsolute, resolve } from "node:path";
+import type { Plugin } from "@opencode-ai/plugin";
+import type {
+  FilePart,
+  FilePartInput,
+  Part,
+  TextPartInput,
+} from "@opencode-ai/sdk";
+import { makeCapabilityLookup } from "./capabilities";
 import {
   registerVisionAgent,
   resolveConfig,
-  VISION_AGENT_NAME,
   VISION_FALLBACK_NOTICE,
 } from "./config";
-import { makeCapabilityLookup } from "./capabilities";
 import {
-  transcribeMessages,
   collectTranscriptionTargets,
   currentRequestMessages,
-  messageText,
   errorMessage,
   getActiveModel,
+  messageText,
   type TransformMessage,
+  transcribeMessages,
 } from "./transform";
 
 const VISION_SESSION_BODY = {
@@ -34,7 +38,7 @@ export const VisionFallback: Plugin = async (input, options) => {
         body: {
           service: "vision-fallback",
           level: "info",
-          message: "vision-fallback disabled: no model configured",
+          message: "vision-fallback disabled: invalid or incomplete configuration",
         },
       })
       .catch(() => {});
@@ -63,9 +67,11 @@ export const VisionFallback: Plugin = async (input, options) => {
   };
 
   log("info", "plugin initialized", {
-    visionAgent: VISION_AGENT_NAME,
-    visionProviderID: cfg.providerID,
-    visionModelID: cfg.modelID,
+    visionAgent: cfg.agentName,
+    visionMode: cfg.mode,
+    ...(cfg.mode === "built-in"
+      ? { visionProviderID: cfg.providerID, visionModelID: cfg.modelID }
+      : {}),
     mimePrefixes: cfg.mimePrefixes,
   });
 
@@ -87,7 +93,7 @@ export const VisionFallback: Plugin = async (input, options) => {
       ];
       const res = await input.client.session.prompt({
         path: { id: sid },
-        body: { agent: VISION_AGENT_NAME, parts },
+        body: { agent: cfg.agentName, parts },
       });
       if (res.error) throw new Error(errorMessage(res.error));
       if (!res.data) throw new Error("vision session prompt failed");
@@ -101,12 +107,26 @@ export const VisionFallback: Plugin = async (input, options) => {
 
   return {
     config: async (config) => {
-      registerVisionAgent(config, cfg);
+      switch (cfg.mode) {
+        case "built-in":
+          registerVisionAgent(config, cfg);
+          break;
+        case "external":
+          break;
+        default: {
+          const exhaustive: never = cfg;
+          return exhaustive;
+        }
+      }
     },
     "experimental.chat.system.transform": async (hookInput, output) => {
       const { sessionID, model } = hookInput;
       if (sessionID && internalSessions.has(sessionID)) return;
-      if (model.providerID === cfg.providerID && model.id === cfg.modelID) return;
+      if (
+        cfg.mode === "built-in" &&
+        model.providerID === cfg.providerID &&
+        model.id === cfg.modelID
+      ) return;
       if (await lookup(model.providerID, model.id)) return;
       output.system.push(VISION_FALLBACK_NOTICE);
     },
@@ -132,7 +152,11 @@ export const VisionFallback: Plugin = async (input, options) => {
         log("info", "skip: no active model", { targetCount: targets.length });
         return;
       }
-      if (model.providerID === cfg.providerID && model.modelID === cfg.modelID) {
+      if (
+        cfg.mode === "built-in" &&
+        model.providerID === cfg.providerID &&
+        model.modelID === cfg.modelID
+      ) {
         log("info", "skip: active model is configured vision model", {
           providerID: model.providerID,
           modelID: model.modelID,
