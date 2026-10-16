@@ -1,10 +1,9 @@
 import { test, expect } from "bun:test";
-import { VisionFallback } from "../src/index";
+import { VisionFallback } from "../src/legacy";
 import { VISION_FALLBACK_NOTICE } from "../src/config";
 import type { Part, FilePart, TextPart, UserMessage, AssistantMessage, ToolPart, Message } from "@opencode-ai/sdk";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { tmpdir } from "node:os";
 
 let nextPartId = 1;
 
@@ -424,7 +423,7 @@ test("describe session lifecycle: create, prompt, delete each called once", asyn
 });
 
 test("promptFile supplies the built-in vision agent prompt", async () => {
-  const directory = await mkdtemp(join(tmpdir(), "opencode-eyesight-"));
+  const directory = await mkdtemp(join(import.meta.dir, ".prompt-fixture-"));
   await writeFile(join(directory, "prompt.md"), "\nDescribe using markdown file.\n");
 
   const fakeClient = makePromptCaptureClient(() => {}, "ses_prompt_file");

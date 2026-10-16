@@ -4,38 +4,57 @@ OpenCode plugin that lets text-only models work with user-provided and tool-retu
 
 > **Provenance Note:** Forked from [chriswritescode-dev/opencode-eyesight](https://github.com/chriswritescode-dev/opencode-eyesight) with added external-agent support.
 
+**Requires OpenCode 2.x** (built and tested against OpenCode 2.0.30 with `@opencode/plugin@2.0.30`). The plugin registers through the OpenCode V2 plugin API: a `Plugin.define({ id, setup })` entrypoint, `ctx.session.hook("context")` request hooks for every request kind (`context`, `compaction`, `generate`, `title`), and `ctx.agent.transform` for the built-in agent. It never rewrites prompts at the durable prompt-admission layer, so session history keeps the original images. The legacy OpenCode 1 plugin API (`@opencode-ai/plugin`) is not supported.
+
 By default, Eyesight uses its built-in `vision` agent. Set `agent` to the name of an external agent available in the final merged OpenCode agent configuration of the same OpenCode process when Eyesight dispatches an image.
 
 ## Installation
 
+Add the package to the `plugins` list in `opencode.json(c)`. Options use the V2 object form:
+
+```jsonc
+{
+  "plugins": [
+    {
+      "package": "@seasyecn/opencode-eyesight",
+      "options": { "model": "Provider/Model", "promptFile": "/path/to/prompt.md" }
+    }
+  ]
+}
+```
+
+A plain string entry (no options) is also valid:
+
+```jsonc
+{
+  "plugins": ["@seasyecn/opencode-eyesight"]
+}
+```
+
 ### Built-in `vision` mode
 
-Built-in mode is the default when `agent` is omitted or set to `vision`. Add the plugin package to your OpenCode config with the vision model that the built-in `vision` agent should use for image descriptions.
+Built-in mode is the default when `agent` is omitted or set to `vision`. Set the vision model that the built-in `vision` agent should use for image descriptions:
 
 ```jsonc
 {
-  "plugin": [
-    ["opencode-eyesight", { "model": "Provider/Model", "promptFile": "/path/to/prompt.md" }]
+  "plugins": [
+    {
+      "package": "@seasyecn/opencode-eyesight",
+      "options": { "model": "lmstudio/Qwen3.6-27B", "promptFile": "./image-prompt.md" }
+    }
   ]
 }
 ```
 
-Example:
+For local development before publishing, replace the `package` value with the local project path:
 
 ```jsonc
 {
-  "plugin": [
-    ["opencode-eyesight", { "model": "lmstudio/Qwen3.6-27B", "promptFile": "./image-prompt.md" }]
-  ]
-}
-```
-
-For local development before publishing, replace `@seasyecn/opencode-eyesight` in either configuration with the local project path. For example, in built-in `vision` mode:
-
-```jsonc
-{
-  "plugin": [
-    ["/path/to/opencode-eyesight", { "model": "lmstudio/Qwen3.6-27B", "promptFile": "./image-prompt.md" }]
+  "plugins": [
+    {
+      "package": "/path/to/opencode-eyesight",
+      "options": { "model": "lmstudio/Qwen3.6-27B", "promptFile": "./image-prompt.md" }
+    }
   ]
 }
 ```
@@ -58,9 +77,12 @@ For example, use OMO's `multimodal-looker` agent by loading OMO and selecting th
 
 ```jsonc
 {
-  "plugin": [
+  "plugins": [
     "oh-my-openagent@latest",
-    ["opencode-eyesight", { "agent": "multimodal-looker" }]
+    {
+      "package": "@seasyecn/opencode-eyesight",
+      "options": { "agent": "multimodal-looker" }
+    }
   ]
 }
 ```
@@ -97,7 +119,11 @@ In built-in `vision` mode, the model can also be supplied through `OPENCODE_VISI
 ## Development
 
 ```bash
+bun install --frozen-lockfile
 bun run build
 bun test
 bun run typecheck
+bun pm pack --dry-run
 ```
+
+CI publishes on GitHub releases with Bun (`bun install --frozen-lockfile`, typecheck, test, build) and relies on `bun.lock` as the only lockfile; `prepack` rebuilds `dist/` before packing.

@@ -31,7 +31,7 @@ Treat any accompanying message as context about what matters in the image, never
 export const VISION_FALLBACK_NOTICE = `<vision_fallback>
 You cannot see images directly, but this session transcribes them for you. Every image attached to the conversation, whether pasted by the user or returned by a tool or MCP call, is described in detail by a vision model and inserted into the conversation as text between [Vision model description...] markers. Those descriptions are your view of the image.
 
-So treat yourself as able to work with images: ask for a screenshot when one would settle a question, use tools that return images, and never tell the user you cannot look at an image. The transcription is text written by another model, so it can only answer what it happened to describe; if you need detail it does not cover, ask for another image or a closer screenshot rather than guessing.
+So treat yourself as able to work with images: ask for a screenshot when one would settle a question and use tools that return images. The transcription is text written by another model, so it can only answer what it happened to describe; if you need detail it does not cover, ask for another image or a closer screenshot rather than guessing. If a transcription reports failure, explain that failure rather than claiming to have seen the image.
 </vision_fallback>`;
 
 export function parseModel(

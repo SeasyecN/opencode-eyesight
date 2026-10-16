@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 import type { Config } from "@opencode-ai/plugin";
 import type { FilePart, Part, UserMessage } from "@opencode-ai/sdk";
 import { $ } from "bun";
-import { VisionFallback } from "../src/index";
+import { VisionFallback } from "../src/legacy";
 
 type PluginInput = Parameters<typeof VisionFallback>[0];
 type PromptBody = {

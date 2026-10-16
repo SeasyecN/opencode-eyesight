@@ -1,6 +1,6 @@
 {
   "name": "@seasyecn/opencode-eyesight",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "OpenCode plugin that lets text-only models work with pasted images through a vision-capable model.",
   "repository": {
     "type": "git",
@@ -13,26 +13,35 @@
   "type": "module",
   "main": "./dist/index.js",
   "exports": {
-    ".": "./dist/index.js"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
   },
   "files": [
-    "dist",
+    "dist/index.js",
+    "dist/index.d.ts",
     "README.md"
   ],
   "publishConfig": {
     "access": "public"
   },
   "scripts": {
-    "build": "bun build ./src/index.ts --outdir ./dist --target bun --format esm --external @opencode-ai/plugin --external @opencode-ai/sdk",
+    "build": "bun build ./src/index.ts --outdir ./dist --target bun --format esm --external @opencode/plugin && tsc --project tsconfig.build.json",
     "test": "bun test",
     "typecheck": "tsc --noEmit",
     "prepack": "bun run build"
   },
   "devDependencies": {
-    "@opencode-ai/plugin": "latest",
-    "@opencode-ai/sdk": "latest",
+    "@opencode/ai": "2.0.30",
+    "@opencode-ai/plugin": "1.17.7",
+    "@opencode-ai/sdk": "1.17.7",
+    "@opencode/client": "2.0.30",
     "@types/bun": "latest",
     "typescript": "^5"
-  }
+  },
+  "dependencies": {
+    "@opencode/plugin": "2.0.30"
+  },
+  "types": "./dist/index.d.ts"
 }
-
