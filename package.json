@@ -1,6 +1,7 @@
 {
   "name": "@seasyecn/opencode-eyesight",
   "version": "0.3.0",
+  "license": "MIT",
   "description": "OpenCode plugin that lets text-only models work with pasted images through a vision-capable model.",
   "repository": {
     "type": "git",
@@ -21,7 +22,8 @@
   "files": [
     "dist/index.js",
     "dist/index.d.ts",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
   "publishConfig": {
     "access": "public"
